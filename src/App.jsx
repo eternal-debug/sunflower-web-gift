@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  audioSettings,
   clouds,
   decorativeFlowers,
   editableContent,
   flowerQuotes,
   foregroundLayers,
-  audioSettings,
   interactiveFlowers,
   petals,
+  staticAssets,
 } from './data/content.js';
 import { clearGameState, loadGameState, saveGameState } from './utils/storage.js';
 
@@ -41,7 +42,7 @@ function LoadingScreen() {
   return (
     <div className="loading-screen" aria-live="polite">
       <div className="loading-card">
-        <img src="/assets/flower-variant-10.png" alt="" className="loading-flower" />
+        <img src={staticAssets.loadingFlower} alt="" className="loading-flower" />
         <p>Đang mở cánh đồng nhỏ...</p>
         <div className="loading-line"><span /></div>
       </div>
@@ -88,7 +89,7 @@ function PetalsLayer() {
       {petals.map((petal) => (
         <img
           key={petal.id}
-          src="/assets/petal.svg"
+          src={staticAssets.petal}
           alt=""
           className="floating-petal"
           style={{
@@ -251,7 +252,7 @@ function InventoryBag({ count, total, onOpen, bagRef, pulse }) {
       aria-label={`Mở túi hoa, đã hái ${count} trên ${total} bông`}
     >
       <span className="bag-glow" />
-      <img src="/assets/bag.svg" alt="" />
+      <img src={staticAssets.bag} alt="" />
       <span className="bag-count">{count}/{total}</span>
     </button>
   );
@@ -414,7 +415,7 @@ function InventoryModal({ collectedFlowers, quoteByFlowerId, selectedId, onSelec
 
         {collectedFlowers.length === 0 ? (
           <div className="empty-inventory">
-            <img src="/assets/bag.svg" alt="" />
+            <img src={staticAssets.bag} alt="" />
             <p>Túi còn trống. Hãy thử hái một bông hướng dương đầu tiên.</p>
           </div>
         ) : (
@@ -475,7 +476,7 @@ function FinalGiftSequence({ onClose, onOpenInventory, onRestart }) {
         </div>
 
         <article className="letter-card">
-          <img src="/assets/letter-card.svg" alt="" className="letter-art" />
+          <img src={staticAssets.letterCard} alt="" className="letter-art" />
           <div className="letter-text">
             <p className="modal-kicker">final gift</p>
             <h2 id="final-title">{editableContent.finalTitle}</h2>
@@ -540,6 +541,7 @@ function App() {
   const sceneStyle = {
     '--parallax-x': `${mouse.x * 10}px`,
     '--parallax-y': `${mouse.y * 6}px`,
+    '--scene-bg': `url("${staticAssets.background}")`,
   };
 
   function handleMouseMove(event) {

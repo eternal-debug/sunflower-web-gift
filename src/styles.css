@@ -68,7 +68,7 @@ button {
 .scene-completed {
   background:
     linear-gradient(180deg, rgba(82, 170, 229, 0.88) 0%, rgba(251, 208, 111, 0.55) 51%, rgba(255, 177, 87, 0.42) 100%),
-    url('/assets/bg-sunflower-field.png') center / cover no-repeat;
+    var(--scene-bg) center / cover no-repeat;
 }
 
 .scene-completed .sun-layer {
@@ -1018,11 +1018,10 @@ button {
   }
 }
 
-/* --- UI/UX readability + asset/audio patch --- */
 .app-shell {
   background:
-    linear-gradient(180deg, rgba(91, 181, 234, 0.62) 0%, rgba(151, 216, 244, 0.42) 34%, rgba(255, 222, 123, 0.14) 58%),
-    url('/assets/bg-sunflower-field.png') center / cover no-repeat;
+    linear-gradient(180deg, rgba(86, 181, 239, 0.92) 0%, rgba(139, 211, 250, 0.8) 33%, rgba(247, 214, 106, 0.2) 58%),
+    var(--scene-bg) center / cover no-repeat;
 }
 
 .app-shell::after {
@@ -1032,8 +1031,8 @@ button {
 
 .scene-completed {
   background:
-    linear-gradient(180deg, rgba(83, 172, 230, 0.68) 0%, rgba(252, 210, 114, 0.5) 54%, rgba(255, 174, 83, 0.36) 100%),
-    url('/assets/bg-sunflower-field.png') center / cover no-repeat;
+    linear-gradient(180deg, rgba(82, 170, 229, 0.88) 0%, rgba(251, 208, 111, 0.55) 51%, rgba(255, 177, 87, 0.42) 100%),
+    var(--scene-bg) center / cover no-repeat;
 }
 
 .hero-copy {

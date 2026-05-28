@@ -1,3 +1,15 @@
+const BASE = import.meta.env.BASE_URL;
+
+const asset = (path) => `${BASE}${path.replace(/^\//, '')}`;
+
+export const staticAssets = {
+  background: asset('/assets/bg-sunflower-field.png'),
+  loadingFlower: asset('/assets/flower-variant-10.png'),
+  petal: asset('/assets/petal.svg'),
+  bag: asset('/assets/bag.svg'),
+  letterCard: asset('/assets/letter-card.svg'),
+};
+
 export const editableContent = {
   introLine: 'Nếu hôm nay em mệt, hãy ở lại cánh đồng này một chút nhé.',
   giftTitle: 'Hái nắng cho em',
@@ -19,7 +31,7 @@ Anh mong cánh đồng này có thể giữ hộ em một chút nắng, đến k
 };
 
 export const audioSettings = {
-  src: '/audio/classical-loop.mp3',
+  src: asset('/audio/classical-loop.mp3'),
   volume: 0.05,
   autoPlay: true,
   autoPlayDelayMs: 220,
@@ -69,16 +81,16 @@ export const flowerQuotes = [
 ];
 
 export const interactiveFlowers = [
-  { id: 'sun-01', label: 'Một chút nắng', asset: '/assets/flower-variant-1.png', x: 13, y: 57, size: 145, tilt: -7, sway: 5.2, delay: -0.3 },
-  { id: 'sun-02', label: 'Bình yên nhỏ', asset: '/assets/flower-variant-2.png', x: 25, y: 64, size: 122, tilt: 5, sway: 4.6, delay: -1.1 },
-  { id: 'sun-03', label: 'Một hơi thở', asset: '/assets/flower-variant-3.png', x: 36, y: 53, size: 154, tilt: 2, sway: 5.5, delay: -1.8 },
-  { id: 'sun-04', label: 'Ngày chậm lại', asset: '/assets/flower-variant-4.png', x: 47, y: 67, size: 126, tilt: -9, sway: 4.1, delay: -0.8 },
-  { id: 'sun-05', label: 'Dịu dàng', asset: '/assets/flower-variant-5.png', x: 58, y: 56, size: 164, tilt: 4, sway: 5.8, delay: -2.4 },
-  { id: 'sun-06', label: 'Không cần vội', asset: '/assets/flower-variant-6.png', x: 69, y: 65, size: 124, tilt: 8, sway: 4.8, delay: -1.6 },
-  { id: 'sun-07', label: 'Một nụ cười', asset: '/assets/flower-variant-7.png', x: 79, y: 54, size: 152, tilt: -4, sway: 5.1, delay: -2.1 },
-  { id: 'sun-08', label: 'Cánh gió mềm', asset: '/assets/flower-variant-8.png', x: 18, y: 72, size: 118, tilt: 6, sway: 4.4, delay: -2.7 },
-  { id: 'sun-09', label: 'Nắng ở lại', asset: '/assets/flower-variant-9.png', x: 88, y: 70, size: 132, tilt: -6, sway: 4.9, delay: -0.5 },
-  { id: 'sun-10', label: 'Bông cuối cùng', asset: '/assets/flower-variant-10.png', x: 51, y: 45, size: 178, tilt: 0, sway: 6.2, delay: -3.0 },
+  { id: 'sun-01', label: 'Một chút nắng', asset: asset('/assets/flower-variant-1.png'), x: 13, y: 57, size: 145, tilt: -7, sway: 5.2, delay: -0.3 },
+  { id: 'sun-02', label: 'Bình yên nhỏ', asset: asset('/assets/flower-variant-2.png'), x: 25, y: 64, size: 122, tilt: 5, sway: 4.6, delay: -1.1 },
+  { id: 'sun-03', label: 'Một hơi thở', asset: asset('/assets/flower-variant-3.png'), x: 36, y: 53, size: 154, tilt: 2, sway: 5.5, delay: -1.8 },
+  { id: 'sun-04', label: 'Ngày chậm lại', asset: asset('/assets/flower-variant-4.png'), x: 47, y: 67, size: 126, tilt: -9, sway: 4.1, delay: -0.8 },
+  { id: 'sun-05', label: 'Dịu dàng', asset: asset('/assets/flower-variant-5.png'), x: 58, y: 56, size: 164, tilt: 4, sway: 5.8, delay: -2.4 },
+  { id: 'sun-06', label: 'Không cần vội', asset: asset('/assets/flower-variant-6.png'), x: 69, y: 65, size: 124, tilt: 8, sway: 4.8, delay: -1.6 },
+  { id: 'sun-07', label: 'Một nụ cười', asset: asset('/assets/flower-variant-7.png'), x: 79, y: 54, size: 152, tilt: -4, sway: 5.1, delay: -2.1 },
+  { id: 'sun-08', label: 'Cánh gió mềm', asset: asset('/assets/flower-variant-8.png'), x: 18, y: 72, size: 118, tilt: 6, sway: 4.4, delay: -2.7 },
+  { id: 'sun-09', label: 'Nắng ở lại', asset: asset('/assets/flower-variant-9.png'), x: 88, y: 70, size: 132, tilt: -6, sway: 4.9, delay: -0.5 },
+  { id: 'sun-10', label: 'Bông cuối cùng', asset: asset('/assets/flower-variant-10.png'), x: 51, y: 45, size: 178, tilt: 0, sway: 6.2, delay: -3.0 },
 ];
 
 export const decorativeFlowers = Array.from({ length: 44 }, (_, index) => {
@@ -90,7 +102,7 @@ export const decorativeFlowers = Array.from({ length: 44 }, (_, index) => {
 
   return {
     id: `decor-${index + 1}`,
-    asset: `/assets/flower-variant-${assetIndex}.png`,
+    asset: asset(`/assets/flower-variant-${assetIndex}.png`),
     x: 4 + col * 9 + jitterX * 0.35,
     y: 61 + row * 8 + jitterY * 0.25,
     size: 52 + ((index * 19) % 46),
