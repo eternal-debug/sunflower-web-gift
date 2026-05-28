@@ -8,11 +8,13 @@ import {
   foregroundLayers,
   interactiveFlowers,
   petals,
+  sparkleDust,
   staticAssets,
 } from './data/content.js';
 import { clearGameState, loadGameState, saveGameState } from './utils/storage.js';
 
 const TOTAL_FLOWERS = interactiveFlowers.length;
+const IDLE_HINT_DELAY_MS = 20000;
 
 function shuffle(array) {
   const copy = [...array];
@@ -38,13 +40,34 @@ function createFreshGame() {
   };
 }
 
+function ArtImage({ src, alt = '', className = '', fallbackClassName = '', ...props }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return <span className={`painted-fallback ${fallbackClassName}`} aria-hidden="true" {...props} />;
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      draggable="false"
+      onError={() => setHasError(true)}
+      {...props}
+    />
+  );
+}
+
 function LoadingScreen() {
   return (
     <div className="loading-screen" aria-live="polite">
       <div className="loading-card">
-        <img src={staticAssets.loadingFlower} alt="" className="loading-flower" />
-        <p>Đang mở cánh đồng nhỏ...</p>
-        <div className="loading-line"><span /></div>
+        <span className="loading-glow" aria-hidden="true" />
+        <ArtImage src={staticAssets.loadingFlower} className="loading-flower" fallbackClassName="fallback-flower" />
+        <p className="loading-kicker">opening a handmade field</p>
+        <h2>Đang mở cánh đồng nhỏ...</h2>
+        <div className="loading-line" aria-hidden="true"><span /></div>
       </div>
     </div>
   );
@@ -56,6 +79,27 @@ function CurtainReveal() {
       <div className="curtain-panel curtain-panel-left" />
       <div className="curtain-panel curtain-panel-right" />
       <div className="curtain-lift" />
+      <div className="curtain-sunburst" />
+    </div>
+  );
+}
+
+function AmbientDust() {
+  return (
+    <div className="ambient-dust" aria-hidden="true">
+      {sparkleDust.map((dust) => (
+        <span
+          key={dust.id}
+          className="dust-mote"
+          style={{
+            left: `${dust.left}%`,
+            top: `${dust.top}%`,
+            '--dust-delay': `${dust.delay}s`,
+            '--dust-duration': `${dust.duration}s`,
+            '--dust-scale': dust.scale,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -66,15 +110,19 @@ function CloudsLayer() {
       {clouds.map((cloud) => (
         <span
           key={cloud.id}
-          className="cloud"
+          className="cloud-wrap"
           style={{
             '--cloud-x': `${cloud.x}%`,
             '--cloud-y': `${cloud.y}%`,
+            '--cloud-width': `${cloud.width}px`,
             '--cloud-scale': cloud.scale,
             '--cloud-duration': `${cloud.duration}s`,
             '--cloud-delay': `${cloud.delay}s`,
+            '--cloud-opacity': cloud.opacity,
           }}
-        />
+        >
+          <ArtImage src={cloud.asset} className="cloud cloud-art" fallbackClassName="fallback-cloud" />
+        </span>
       ))}
     </div>
   );
@@ -87,21 +135,21 @@ function PetalsLayer() {
       <span className="wind-ribbon wind-ribbon-2" />
       <span className="wind-ribbon wind-ribbon-3" />
       {petals.map((petal) => (
-        <img
+        <ArtImage
           key={petal.id}
           src={staticAssets.petal}
-          alt=""
           className="floating-petal"
+          fallbackClassName="fallback-petal"
           style={{
             '--petal-left': `${petal.left}%`,
             '--petal-delay': `${petal.delay}s`,
             '--petal-duration': `${petal.duration}s`,
             '--petal-scale': petal.scale,
             '--petal-drift': `${petal.drift}px`,
-            '--petal-gust': `${petal.gust ?? 120}px`,
-            '--petal-wave': `${petal.wave ?? 42}px`,
+            '--petal-gust': `${petal.gust}px`,
+            '--petal-wave': `${petal.wave}px`,
             '--petal-spin': `${petal.spin}deg`,
-            '--petal-start-rotate': `${petal.startRotate ?? 0}deg`,
+            '--petal-start-rotate': `${petal.startRotate}deg`,
           }}
         />
       ))}
@@ -117,7 +165,8 @@ function DecorativeField() {
           key={flower.id}
           src={flower.asset}
           alt=""
-          className="decorative-flower"
+          className={`decorative-flower decorative-depth-${flower.depth}`}
+          draggable="false"
           style={{
             left: `${flower.x}%`,
             top: `${flower.y}%`,
@@ -141,6 +190,7 @@ function ForegroundLayers() {
           src={layer.asset}
           alt=""
           className={`foreground-layer foreground-layer-${layer.kind ?? 'mid'}`}
+          draggable="false"
           onError={(event) => {
             event.currentTarget.style.display = 'none';
           }}
@@ -164,11 +214,11 @@ function Flower({ flower, collected, quote, onPick }) {
   if (collected) {
     return (
       <div
-        className="flower-empty-spot"
+        className={`flower-empty-spot flower-depth-${flower.depth}`}
         style={{
           left: `${flower.x}%`,
           top: `${flower.y + 10}%`,
-          width: `${flower.size * 0.45}px`,
+          width: `${flower.size * 0.46}px`,
         }}
         aria-hidden="true"
       />
@@ -178,9 +228,9 @@ function Flower({ flower, collected, quote, onPick }) {
   return (
     <button
       id={`flower-${flower.id}`}
-      className="flower-button"
+      className={`flower-button flower-depth-${flower.depth}`}
       type="button"
-      aria-label={`Hái bông hoa: ${flower.label}`}
+      aria-label={`Hái bông hoa: ${flower.label}. Lời nhắn: ${quote}`}
       onClick={() => onPick(flower)}
       style={{
         left: `${flower.x}%`,
@@ -192,9 +242,35 @@ function Flower({ flower, collected, quote, onPick }) {
       }}
       title={quote}
     >
+      <span className="flower-touch-ring" aria-hidden="true" />
       <img src={flower.asset} alt="" draggable="false" />
       <span className="flower-aura" />
+      <span className="flower-label-pop">{flower.label}</span>
     </button>
+  );
+}
+
+function ProgressHud({ count, total, collectedIds, onOpenInventory }) {
+  const percent = Math.round((count / total) * 100);
+  const collectedSet = useMemo(() => new Set(collectedIds), [collectedIds]);
+
+  return (
+    <aside className="progress-hud" aria-label="Tiến trình hái hoa">
+      <button type="button" className="progress-card" onClick={onOpenInventory}>
+        <span className="progress-card-kicker">{editableContent.progressLabel}</span>
+        <strong>{count}/{total}</strong>
+        <span className="progress-bar" aria-hidden="true"><span style={{ width: `${percent}%` }} /></span>
+      </button>
+      <div className="progress-orbs" aria-hidden="true">
+        {interactiveFlowers.map((flower, index) => (
+          <span
+            key={flower.id}
+            className={`progress-orb ${collectedSet.has(flower.id) ? 'progress-orb-done' : ''}`}
+            style={{ '--orb-delay': `${index * 80}ms` }}
+          />
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -205,8 +281,8 @@ function QuoteCard({ flower, quote, onKeep, onClose }) {
     <div className="quote-backdrop" role="dialog" aria-modal="true" aria-labelledby="quote-title">
       <article className="quote-card">
         <button className="soft-close" type="button" onClick={onClose} aria-label="Đóng lời nhắn">×</button>
-        <div className="quote-card-flower-wrap">
-          <img src={flower.asset} alt="" className="quote-card-flower" />
+        <div id={`quote-flower-anchor-${flower.id}`} className="quote-card-flower-wrap">
+          <img src={flower.asset} alt="" className="quote-card-flower" draggable="false" />
         </div>
         <p id="quote-title" className="quote-kicker">{flower.label}</p>
         <div className="quote-lines">
@@ -214,9 +290,14 @@ function QuoteCard({ flower, quote, onKeep, onClose }) {
             <p key={`${line}-${index}`} style={{ animationDelay: `${index * 120 + 120}ms` }}>{line}</p>
           ))}
         </div>
-        <button className="primary-note-button" type="button" onClick={onKeep}>
-          Giữ bông hoa này
-        </button>
+        <div className="quote-actions">
+          <button className="primary-note-button" type="button" onClick={onKeep}>
+            Giữ bông hoa này
+          </button>
+          <button className="ghost-note-button" type="button" onClick={onClose}>
+            Đọc lại sau
+          </button>
+        </div>
       </article>
     </div>
   );
@@ -228,6 +309,7 @@ function FlyingFlower({ flight, onDone }) {
       src={flight.asset}
       alt=""
       className="flying-flower"
+      draggable="false"
       onAnimationEnd={onDone}
       style={{
         left: `${flight.startX}px`,
@@ -249,10 +331,10 @@ function InventoryBag({ count, total, onOpen, bagRef, pulse }) {
       type="button"
       className={`inventory-bag ${pulse ? 'inventory-bag-pulse' : ''}`}
       onClick={onOpen}
-      aria-label={`Mở túi hoa, đã hái ${count} trên ${total} bông`}
+      aria-label={`Mở rổ hoa, đã hái ${count} trên ${total} bông`}
     >
       <span className="bag-glow" />
-      <img src={staticAssets.bag} alt="" />
+      <ArtImage src={staticAssets.basket} className="basket-art" fallbackClassName="fallback-basket" />
       <span className="bag-count">{count}/{total}</span>
     </button>
   );
@@ -298,8 +380,6 @@ function AudioControl({ shouldAutoPlay }) {
       setIsPlaying(true);
       fadeVolume(audioSettings.volume ?? 0.32);
     } catch {
-      // Browsers usually block audible autoplay until the visitor interacts with the page.
-      // The app keeps trying once, then unlocks the music on the first click/key press anywhere.
       if (audio.error) {
         setAudioStatus('missing');
       } else {
@@ -368,7 +448,7 @@ function AudioControl({ shouldAutoPlay }) {
         ? 'Tắt nhạc'
         : audioStatus === 'blocked'
           ? 'Bấm để bật nhạc'
-          : 'Nhạc tự bật';
+          : 'Tắt nhạc';
 
   return (
     <div className={`audio-control ${audioStatus === 'blocked' ? 'audio-needs-gesture' : ''}`}>
@@ -399,53 +479,60 @@ function AudioControl({ shouldAutoPlay }) {
   );
 }
 
-function InventoryModal({ collectedFlowers, quoteByFlowerId, selectedId, onSelect, onClose }) {
-  const selectedFlower = collectedFlowers.find((flower) => flower.id === selectedId) ?? collectedFlowers[0] ?? null;
+function FlowerMemoryPopup({ flower, quote, onClose }) {
+  if (!flower) return null;
 
   return (
+    <div className="memory-popup-backdrop" role="dialog" aria-modal="true" aria-labelledby="memory-title">
+      <article className="memory-popup-card">
+        <button className="soft-close" type="button" onClick={onClose} aria-label="Đóng lời nhắn">×</button>
+        <div className="memory-flower-stage" aria-hidden="true">
+          <img src={flower.asset} alt="" draggable="false" />
+        </div>
+        <p className="modal-kicker">lời nhắn trong hoa</p>
+        <h2 id="memory-title">{flower.label}</h2>
+        <p className="memory-quote">“{quote}”</p>
+        <button className="primary-note-button" type="button" onClick={onClose}>Quay lại rổ hoa</button>
+      </article>
+    </div>
+  );
+}
+
+function InventoryModal({ collectedFlowers, onOpenFlower, onClose }) {
+  return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="inventory-title">
-      <section className="inventory-modal">
+      <section className="inventory-modal inventory-modal-grid-only">
         <header className="modal-header">
           <div>
             <p className="modal-kicker">keepsake album</p>
-            <h2 id="inventory-title">Túi hoa nhỏ của em</h2>
+            <h2 id="inventory-title">Rổ hoa nhỏ của em</h2>
           </div>
-          <button className="soft-close" type="button" onClick={onClose} aria-label="Đóng túi hoa">×</button>
+          <button className="soft-close" type="button" onClick={onClose} aria-label="Đóng rổ hoa">×</button>
         </header>
 
         {collectedFlowers.length === 0 ? (
           <div className="empty-inventory">
-            <img src={staticAssets.bag} alt="" />
-            <p>Túi còn trống. Hãy thử hái một bông hướng dương đầu tiên.</p>
+            <ArtImage src={staticAssets.basket} className="empty-basket-art" fallbackClassName="fallback-basket" />
+            <p>{editableContent.emptyHint}</p>
           </div>
         ) : (
-          <div className="inventory-content">
-            <div className="flower-grid" aria-label="Những bông hoa đã hái">
+          <>
+            <p className="inventory-helper">Chạm vào từng bông để mở lại lời chúc.</p>
+            <div className="flower-grid flower-grid-only" aria-label="Những bông hoa đã hái">
               {collectedFlowers.map((flower, index) => (
                 <button
                   key={flower.id}
                   type="button"
-                  className={`flower-item ${selectedFlower?.id === flower.id ? 'flower-item-active' : ''}`}
-                  onClick={() => onSelect(flower.id)}
+                  className="flower-item"
+                  onClick={() => onOpenFlower(flower.id)}
                   style={{ animationDelay: `${index * 70}ms` }}
                 >
-                  <img src={flower.asset} alt="" />
+                  <img src={flower.asset} alt="" draggable="false" />
                   <span>{flower.label}</span>
                 </button>
               ))}
             </div>
-
-            {selectedFlower && (
-              <article className="flower-detail" key={selectedFlower.id}>
-                <img src={selectedFlower.asset} alt="" className="detail-flower" />
-                <div>
-                  <p className="modal-kicker">lời nhắn trong hoa</p>
-                  <h3>{selectedFlower.label}</h3>
-                  <p className="detail-quote">“{quoteByFlowerId[selectedFlower.id]}”</p>
-                </div>
-              </article>
-            )}
-          </div>
+          </>
         )}
       </section>
     </div>
@@ -453,44 +540,120 @@ function InventoryModal({ collectedFlowers, quoteByFlowerId, selectedId, onSelec
 }
 
 function FinalGiftSequence({ onClose, onOpenInventory, onRestart }) {
+  const [stage, setStage] = useState('bouquet');
+  const [letterTilt, setLetterTilt] = useState({ rotateX: 0, rotateY: 0, dragging: false });
+  const letterDraggingRef = useRef(false);
+  const letterResetTimer = useRef(null);
   const paragraphs = editableContent.finalMessage.split('\n').filter((line) => line.trim().length > 0);
+  const isLetterStage = stage === 'letter';
+
+  useEffect(() => () => {
+    window.clearTimeout(letterResetTimer.current);
+  }, []);
+
+  function updateLetterTilt(event) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const normalizedX = Math.max(-1, Math.min(1, (event.clientX - centerX) / (bounds.width / 2)));
+    const normalizedY = Math.max(-1, Math.min(1, (event.clientY - centerY) / (bounds.height / 2)));
+
+    setLetterTilt({
+      rotateX: Number((-normalizedY * 18).toFixed(2)),
+      rotateY: Number((normalizedX * 22).toFixed(2)),
+      dragging: true,
+    });
+  }
+
+  function resetLetterTilt() {
+    letterDraggingRef.current = false;
+    window.clearTimeout(letterResetTimer.current);
+    setLetterTilt({ rotateX: 0, rotateY: 0, dragging: false });
+  }
+
+  function handleLetterPointerDown(event) {
+    window.clearTimeout(letterResetTimer.current);
+    letterDraggingRef.current = true;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    updateLetterTilt(event);
+  }
+
+  function handleLetterPointerMove(event) {
+    if (!letterDraggingRef.current) return;
+    updateLetterTilt(event);
+  }
+
+  function handleLetterKeyDown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    window.clearTimeout(letterResetTimer.current);
+    setLetterTilt({ rotateX: -10, rotateY: 16, dragging: true });
+    letterResetTimer.current = window.setTimeout(resetLetterTilt, 520);
+  }
 
   return (
-    <div className="final-backdrop" role="dialog" aria-modal="true" aria-labelledby="final-title">
-      <section className="final-card">
-        <div className="bouquet-stage" aria-hidden="true">
-          {interactiveFlowers.map((flower, index) => (
-            <img
-              key={flower.id}
-              src={flower.asset}
-              alt=""
-              className="bouquet-flower"
-              style={{
-                '--bouquet-rotate': `${-38 + index * 8}deg`,
-                '--bouquet-x': `${(index - 4.5) * 19}px`,
-                '--bouquet-y': `${Math.sin(index) * 18}px`,
-                animationDelay: `${index * 85}ms`,
-              }}
+    <div
+      className={`final-backdrop final-backdrop-${stage}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={isLetterStage ? 'final-title' : 'final-bouquet-title'}
+    >
+      <section className={`final-card final-card-${stage}`}>
+        {!isLetterStage ? (
+          <button
+            type="button"
+            id="final-bouquet-title"
+            className="final-bouquet-button"
+            onClick={() => setStage('letter')}
+            aria-label="Mở lá thư trong bó hoa"
+          >
+            <ArtImage
+              src={staticAssets.finalBouquet}
+              className="final-bouquet-art"
+              fallbackClassName="fallback-final-bouquet"
             />
-          ))}
-        </div>
+          </button>
+        ) : (
+          <>
+            <div
+              className={`letter-3d-object ${letterTilt.dragging ? 'letter-3d-object-dragging' : ''}`}
+              role="group"
+              tabIndex={0}
+              aria-label="Tấm thư có thể chạm và kéo để xoay nhẹ"
+              onPointerDown={handleLetterPointerDown}
+              onPointerMove={handleLetterPointerMove}
+              onPointerUp={resetLetterTilt}
+              onPointerCancel={resetLetterTilt}
+              onLostPointerCapture={resetLetterTilt}
+              onKeyDown={handleLetterKeyDown}
+              onContextMenu={(event) => event.preventDefault()}
+              onDragStart={(event) => event.preventDefault()}
+              style={{
+                '--letter-tilt-x': `${letterTilt.rotateX}deg`,
+                '--letter-tilt-y': `${letterTilt.rotateY}deg`,
+              }}
+            >
+              <article className="letter-card">
+                <ArtImage src={staticAssets.letterCard} className="letter-art" fallbackClassName="fallback-letter" />
+                <div className="letter-scroll">
+                  <div className="letter-text">
+                    <p className="modal-kicker">final gift</p>
+                    <h2 id="final-title">{editableContent.finalTitle}</h2>
+                    {paragraphs.map((paragraph, index) => (
+                      <p key={`${paragraph}-${index}`} style={{ animationDelay: `${index * 90 + 120}ms` }}>{paragraph}</p>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            </div>
 
-        <article className="letter-card">
-          <img src={staticAssets.letterCard} alt="" className="letter-art" />
-          <div className="letter-text">
-            <p className="modal-kicker">final gift</p>
-            <h2 id="final-title">{editableContent.finalTitle}</h2>
-            {paragraphs.map((paragraph, index) => (
-              <p key={`${paragraph}-${index}`} style={{ animationDelay: `${index * 110 + 300}ms` }}>{paragraph}</p>
-            ))}
-          </div>
-        </article>
-
-        <div className="final-actions">
-          <button type="button" className="primary-note-button" onClick={onClose}>Ngắm thêm một chút</button>
-          <button type="button" className="secondary-note-button" onClick={onOpenInventory}>Mở túi hoa</button>
-          <button type="button" className="secondary-note-button" onClick={onRestart}>Bắt đầu lại</button>
-        </div>
+            <div className="final-actions final-actions-letter">
+              <button type="button" className="primary-note-button" onClick={onClose}>Ngắm thêm</button>
+              <button type="button" className="secondary-note-button" onClick={onOpenInventory}>Mở rổ hoa</button>
+              <button type="button" className="secondary-note-button" onClick={onRestart}>Bắt đầu lại</button>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
@@ -500,9 +663,35 @@ function LivingArtworkControls({ onReplayFinal, onOpenInventory, onRestart }) {
   return (
     <div className="living-controls" aria-label="Tùy chọn sau khi hoàn thành">
       <button type="button" onClick={onReplayFinal}>Đọc lại lời nhắn</button>
-      <button type="button" onClick={onOpenInventory}>Mở túi hoa</button>
+      <button type="button" onClick={onOpenInventory}>Mở rổ hoa</button>
       <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Ngắm thêm một chút</button>
       <button type="button" onClick={onRestart}>Bắt đầu lại</button>
+    </div>
+  );
+}
+
+function ViewUiToggle({ hidden, onToggle }) {
+  return (
+    <button
+      type="button"
+      className={`view-ui-toggle ${hidden ? 'view-ui-toggle-restore' : ''}`}
+      onClick={onToggle}
+      aria-pressed={hidden}
+      aria-label={hidden ? 'Hiện lại giao diện' : 'Ẩn giao diện để ngắm cánh đồng'}
+    >
+      <span aria-hidden="true">{hidden ? '☀' : '◌'}</span>
+      {hidden ? 'Hiện UI' : 'Ẩn UI'}
+    </button>
+  );
+}
+
+function TapHint({ visible }) {
+  if (!visible) return null;
+
+  return (
+    <div className="tap-hint" aria-live="polite">
+      <span className="tap-hint-ring" aria-hidden="true" />
+      <span>{editableContent.helperLine}</span>
     </div>
   );
 }
@@ -514,9 +703,13 @@ function App() {
   const [flight, setFlight] = useState(null);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [selectedInventoryId, setSelectedInventoryId] = useState(null);
+  const [memoryFlowerId, setMemoryFlowerId] = useState(null);
   const [showFinal, setShowFinal] = useState(false);
   const [bagPulse, setBagPulse] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [idleHintVisible, setIdleHintVisible] = useState(false);
+  const [interactionNonce, setInteractionNonce] = useState(0);
+  const [uiHidden, setUiHidden] = useState(false);
   const bagRef = useRef(null);
 
   useEffect(() => {
@@ -532,10 +725,52 @@ function App() {
     saveGameState(game);
   }, [game]);
 
+  useEffect(() => {
+    function markUserInteraction() {
+      setIdleHintVisible(false);
+      setInteractionNonce((value) => value + 1);
+    }
+
+    window.addEventListener('pointerdown', markUserInteraction, { passive: true });
+    window.addEventListener('keydown', markUserInteraction);
+
+    return () => {
+      window.removeEventListener('pointerdown', markUserInteraction);
+      window.removeEventListener('keydown', markUserInteraction);
+    };
+  }, []);
+
+  useEffect(() => {
+    const canShowIdleHint =
+      phase === 'ready' &&
+      game.collectedIds.length < TOTAL_FLOWERS &&
+      !game.completed &&
+      !activeFlower &&
+      !flight &&
+      !inventoryOpen &&
+      !showFinal &&
+      !uiHidden;
+
+    setIdleHintVisible(false);
+
+    if (!canShowIdleHint) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setIdleHintVisible(true);
+    }, IDLE_HINT_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [phase, game.collectedIds.length, game.completed, activeFlower, flight, inventoryOpen, showFinal, uiHidden, interactionNonce]);
+
   const collectedSet = useMemo(() => new Set(game.collectedIds), [game.collectedIds]);
   const collectedFlowers = useMemo(
     () => interactiveFlowers.filter((flower) => collectedSet.has(flower.id)),
     [collectedSet]
+  );
+
+  const memoryFlower = useMemo(
+    () => collectedFlowers.find((flower) => flower.id === memoryFlowerId) ?? null,
+    [collectedFlowers, memoryFlowerId]
   );
 
   const sceneStyle = {
@@ -543,6 +778,29 @@ function App() {
     '--parallax-y': `${mouse.y * 6}px`,
     '--scene-bg': `url("${staticAssets.background}")`,
   };
+
+  useEffect(() => {
+    function onKeyDown(event) {
+      if (event.key === 'Escape') {
+        setActiveFlower(null);
+        setInventoryOpen(false);
+        setMemoryFlowerId(null);
+        if (showFinal) setShowFinal(false);
+      }
+
+      if (event.key.toLowerCase() === 'h' && !activeFlower && !showFinal && !inventoryOpen) {
+        setUiHidden((value) => !value);
+      }
+
+      if (event.key.toLowerCase() === 'i' && !activeFlower && !showFinal && !uiHidden) {
+        setInventoryOpen(true);
+        setSelectedInventoryId(collectedFlowers[0]?.id ?? null);
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeFlower, collectedFlowers, inventoryOpen, showFinal, uiHidden]);
 
   function handleMouseMove(event) {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -553,33 +811,68 @@ function App() {
 
   function handlePick(flower) {
     if (activeFlower || flight || collectedSet.has(flower.id)) return;
+    if (uiHidden) setUiHidden(false);
     setActiveFlower(flower);
   }
 
   function handleKeepFlower() {
     if (!activeFlower) return;
 
-    const flowerEl = document.getElementById(`flower-${activeFlower.id}`);
+    const pickedFlower = activeFlower;
+    const quoteAnchor = document.getElementById(`quote-flower-anchor-${pickedFlower.id}`);
+    const fieldFlowerEl = document.getElementById(`flower-${pickedFlower.id}`);
     const bagEl = bagRef.current;
-    const flowerRect = flowerEl?.getBoundingClientRect();
+    const startRect = quoteAnchor?.getBoundingClientRect() ?? fieldFlowerEl?.getBoundingClientRect();
     const bagRect = bagEl?.getBoundingClientRect();
+    const willComplete = !game.collectedIds.includes(pickedFlower.id) && game.collectedIds.length + 1 === TOTAL_FLOWERS;
 
-    if (flowerRect && bagRect) {
-      const startX = flowerRect.left + flowerRect.width / 2 - 42;
-      const startY = flowerRect.top + flowerRect.height / 2 - 42;
-      const endX = bagRect.left + bagRect.width / 2 - startX - 32;
-      const endY = bagRect.top + bagRect.height / 2 - startY - 32;
+    // The original field flower is already hidden while the quote is open.
+    // On keep, commit it to the basket immediately, then fly a separate clone
+    // from the visible quote flower into the basket so the reward animation is
+    // never lost.
+    setGame((current) => {
+      if (current.collectedIds.includes(pickedFlower.id)) return current;
+
+      const nextCollected = [...current.collectedIds, pickedFlower.id];
+      const completed = nextCollected.length === TOTAL_FLOWERS;
+
+      return {
+        ...current,
+        collectedIds: nextCollected,
+        completed,
+        hasSeenFinal: completed ? true : current.hasSeenFinal,
+      };
+    });
+
+    if (startRect && bagRect) {
+      const flightWidth = Math.max(84, Math.min(150, pickedFlower.size * 0.66));
+      const startCenterX = startRect.left + startRect.width / 2;
+      const startCenterY = startRect.top + startRect.height / 2;
+      const bagCenterX = bagRect.left + bagRect.width / 2;
+      const bagCenterY = bagRect.top + bagRect.height / 2;
+      const startX = startCenterX - flightWidth / 2;
+      const startY = startCenterY - flightWidth / 2;
+      const endX = bagCenterX - startCenterX;
+      const endY = bagCenterY - startCenterY;
+
       setFlight({
-        id: activeFlower.id,
-        asset: activeFlower.asset,
+        id: pickedFlower.id,
+        asset: pickedFlower.asset,
         startX,
         startY,
         endX,
         endY,
-        midX: endX * 0.42,
-        midY: Math.min(endY * 0.3 - 170, -130),
-        width: Math.max(84, activeFlower.size * 0.62),
+        midX: endX * 0.46,
+        midY: Math.min(endY * 0.32 - 150, -115),
+        width: flightWidth,
+        completed: willComplete,
       });
+    } else {
+      setBagPulse(true);
+      window.setTimeout(() => setBagPulse(false), 850);
+      if (willComplete) {
+        window.setTimeout(() => setShowFinal(true), 650);
+      }
     }
 
     setActiveFlower(null);
@@ -588,25 +881,15 @@ function App() {
   function finishFlight() {
     if (!flight) return;
 
-    setGame((current) => {
-      if (current.collectedIds.includes(flight.id)) return current;
-      const nextCollected = [...current.collectedIds, flight.id];
-      const completed = nextCollected.length === TOTAL_FLOWERS;
-      const next = {
-        ...current,
-        collectedIds: nextCollected,
-        completed,
-        hasSeenFinal: completed ? true : current.hasSeenFinal,
-      };
-      if (completed) {
-        window.setTimeout(() => setShowFinal(true), 650);
-      }
-      return next;
-    });
+    const completedAfterFlight = flight.completed;
 
     setFlight(null);
     setBagPulse(true);
     window.setTimeout(() => setBagPulse(false), 850);
+
+    if (completedAfterFlight) {
+      window.setTimeout(() => setShowFinal(true), 650);
+    }
   }
 
   function closeFinal() {
@@ -626,7 +909,11 @@ function App() {
     setFlight(null);
     setInventoryOpen(false);
     setSelectedInventoryId(null);
+    setMemoryFlowerId(null);
     setShowFinal(false);
+    setIdleHintVisible(false);
+    setInteractionNonce((value) => value + 1);
+    setUiHidden(false);
   }
 
   const completeScene = game.completed;
@@ -636,18 +923,23 @@ function App() {
       {phase === 'loading' && <LoadingScreen />}
 
       <main
-        className={`app-shell ${completeScene ? 'scene-completed' : ''}`}
+        className={`app-shell ${completeScene ? 'scene-completed' : ''} ${idleHintVisible ? 'idle-hint-visible' : ''} ${uiHidden ? 'ui-hidden' : ''}`}
         onMouseMove={handleMouseMove}
         style={sceneStyle}
       >
         <section className="hero-copy" aria-label="Lời mở đầu">
-          <p className="eyebrow">a small field of sunshine</p>
+          <p className="eyebrow">{editableContent.eyebrow}</p>
           <h1>{editableContent.giftTitle}</h1>
           <p>{editableContent.introLine}</p>
+          <div className="hero-progress" aria-hidden="true">
+            <span style={{ width: `${(game.collectedIds.length / TOTAL_FLOWERS) * 100}%` }} />
+          </div>
         </section>
+
 
         <div className="sun-layer" />
         <CloudsLayer />
+        <AmbientDust />
         <div className="field-readability-layer" aria-hidden="true" />
         <DecorativeField />
         <ForegroundLayers />
@@ -657,29 +949,25 @@ function App() {
             <Flower
               key={flower.id}
               flower={flower}
-              collected={collectedSet.has(flower.id)}
+              collected={collectedSet.has(flower.id) || flight?.id === flower.id || activeFlower?.id === flower.id}
               quote={game.quoteByFlowerId[flower.id]}
               onPick={handlePick}
             />
           ))}
         </section>
 
-        {completeScene && <div className="completed-bouquet" aria-hidden="true">
-          {interactiveFlowers.map((flower, index) => (
-            <img
-              key={flower.id}
-              src={flower.asset}
-              alt=""
-              style={{
-                '--complete-rotate': `${-35 + index * 7.8}deg`,
-                '--complete-x': `${(index - 4.5) * 15}px`,
-                '--complete-y': `${Math.cos(index) * 13}px`,
-              }}
+        {completeScene && !showFinal && !flight && (
+          <div className="completed-bouquet" aria-hidden="true">
+            <ArtImage
+              src={staticAssets.finalBouquet}
+              className="completed-bouquet-art"
+              fallbackClassName="fallback-final-bouquet"
             />
-          ))}
-        </div>}
+          </div>
+        )}
 
         <PetalsLayer />
+        <TapHint visible={idleHintVisible} />
 
         <InventoryBag
           count={game.collectedIds.length}
@@ -691,7 +979,9 @@ function App() {
 
         <AudioControl shouldAutoPlay={phase === 'ready'} />
 
-        {completeScene && !showFinal && (
+        <ViewUiToggle hidden={uiHidden} onToggle={() => setUiHidden((value) => !value)} />
+
+        {completeScene && !showFinal && !uiHidden && !flight && (
           <LivingArtworkControls
             onReplayFinal={() => setShowFinal(true)}
             onOpenInventory={openInventory}
@@ -716,10 +1006,22 @@ function App() {
       {inventoryOpen && (
         <InventoryModal
           collectedFlowers={collectedFlowers}
-          quoteByFlowerId={game.quoteByFlowerId}
-          selectedId={selectedInventoryId}
-          onSelect={setSelectedInventoryId}
-          onClose={() => setInventoryOpen(false)}
+          onOpenFlower={(flowerId) => {
+            setSelectedInventoryId(flowerId);
+            setMemoryFlowerId(flowerId);
+          }}
+          onClose={() => {
+            setInventoryOpen(false);
+            setMemoryFlowerId(null);
+          }}
+        />
+      )}
+
+      {memoryFlower && (
+        <FlowerMemoryPopup
+          flower={memoryFlower}
+          quote={game.quoteByFlowerId[memoryFlower.id]}
+          onClose={() => setMemoryFlowerId(null)}
         />
       )}
 

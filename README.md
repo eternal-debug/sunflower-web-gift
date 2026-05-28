@@ -1,23 +1,19 @@
-# Hái nắng cho em
+# Hái nắng cho em — World-class UI/UX upgrade
 
-Một single-page interactive web gift dùng React + Vite. Web chạy hoàn toàn static, không cần backend, database, server-side logic hay tài khoản người dùng.
+Một single-page interactive web gift dùng React + Vite. Bản nâng cấp này giữ style vẽ tay dễ thương, giữ hệ asset hoa/background hiện tại, nhưng nâng trải nghiệm theo hướng web event thương mại: cinematic reveal, HUD tiến trình, micro-interaction, modal scrapbook, ending reward, responsive polish và fallback an toàn khi asset PNG mới chưa sẵn sàng.
 
-## Tính năng đã có
+## Điểm nâng cấp chính
 
-- Loading screen + curtain reveal mở cảnh.
-- Cánh đồng hướng dương vẽ tay bằng placeholder SVG.
-- 10 bông hoa tương tác, mỗi bông có quote riêng.
-- Quote được random từ mảng khi bắt đầu playthrough mới, không lặp trong cùng một lượt.
-- Hover/click animation cho hoa.
-- Quote card dạng giấy ghi chú.
-- Hoa bay theo đường cong vào túi đồ sau khi được giữ lại.
-- Túi đồ có counter, bounce/glow khi nhận hoa.
-- Inventory modal dạng scrapbook/keepsake album.
-- Click từng bông trong túi để xem lại quote.
-- Lưu tiến trình bằng localStorage.
-- Ending sequence khi hái đủ 10 bông.
-- Living artwork state sau ending: bó hoa, cánh hoa bay, mây trôi, ánh nắng.
-- Nút đọc lại lời nhắn, mở túi hoa, ngắm thêm, bắt đầu lại.
+- Giữ 10 bông hoa tương tác và flow hái hoa cũ.
+- Nâng layer cảnh: ánh nắng, dust sparkle, wind ribbon, parallax foreground, mây PNG trôi chậm.
+- Thêm progress HUD dạng event collection, progress bar trong hero, orb trạng thái 10 hoa.
+- Nâng flower interaction: hover label, aura, touch ring, focus state, aria-label rõ hơn.
+- Nâng quote card: card giấy cao cấp, stamp, 2 action, entrance animation mềm.
+- Đổi “túi” thành “rổ hoa” để hợp asset PNG vẽ tay và cảm giác collectible.
+- Nâng inventory thành keepsake album có grid + detail card.
+- Nâng final gift: bouquet stage, ribbon, love-letter card PNG, cinematic backdrop.
+- Thêm keyboard UX: `Esc` đóng modal, `I` mở rổ hoa.
+- Thêm fallback CSS cho cloud/basket/letter/petal để layout không vỡ khi chưa có PNG.
 
 ## Cài đặt local
 
@@ -26,7 +22,7 @@ npm install
 npm run dev
 ```
 
-Mở URL mà Vite hiển thị, thường là:
+Mở URL Vite hiển thị, thường là:
 
 ```bash
 http://localhost:5173
@@ -39,86 +35,55 @@ npm run build
 npm run preview
 ```
 
-## Chỉnh nội dung
-
-File chính để chỉnh quote, lời mở đầu, final message, vị trí hoa:
+## Cấu trúc chỉnh nhanh
 
 ```txt
-src/data/content.js
+src/App.jsx                 Logic tương tác, modal, HUD, scene layers
+src/styles.css              Toàn bộ UI/UX, animation, responsive polish
+src/data/content.js         Quote, text, vị trí hoa, asset paths, cloud/petal data
+src/utils/storage.js        localStorage save/load/reset
+public/assets/README_ASSETS.md
+                            Danh sách asset PNG cần đặt đúng tên
+docs/AI_ASSET_PROMPTS.md    Prompt tạo PNG vẽ tay bằng AI
 ```
 
-Các phần dễ chỉnh:
+## Asset PNG cần tạo/thay
+
+Đặt vào `public/assets/` đúng tên:
+
+```txt
+cloud-soft-01.png
+cloud-soft-02.png
+cloud-soft-03.png
+cloud-soft-04.png
+cloud-soft-05.png
+flower-basket-handpainted.png
+love-letter-card-handpainted.png
+petal-handpainted.png
+```
+
+Các asset cũ cần giữ nguyên:
+
+```txt
+bg-sunflower-field.png
+flower-variant-1.png ... flower-variant-10.png
+foreground-field.png
+foreground-near-flowers.png
+```
+
+## Deploy GitHub Pages
+
+`vite.config.js` hiện dùng:
 
 ```js
-editableContent.introLine
-editableContent.giftTitle
-editableContent.finalTitle
-editableContent.finalMessage
-flowerQuotes
-interactiveFlowers
+base: '/sunflower-web-gift/'
 ```
 
-## Thay asset AI-generated
+Nếu repo GitHub của bạn khác tên, đổi `base` theo tên repo. Nếu deploy user site dạng `<username>.github.io`, đổi thành `/`.
 
-Asset placeholder nằm ở:
+## Ghi chú thương mại hóa
 
-```txt
-public/assets/
-```
-
-Bạn có thể thay các file SVG bằng PNG cùng tên, hoặc sửa đường dẫn trong `src/data/content.js`.
-
-Asset hiện tại:
-
-```txt
-bg-sunflower-field.svg
-flower-variant-1.svg ... flower-variant-10.svg
-petal.svg
-bag.svg
-letter-card.svg
-```
-
-## Thêm nhạc nền
-
-```txt
-public/assets/music/classical-loop.mp3
-```
-
-Hiện project chưa tự bật audio để tránh vấn đề autoplay trên browser. Nếu muốn thêm nhạc, nên thêm nút play/mute thủ công trong UI.
-
-## Deploy GitHub Pages bằng GitHub Actions
-
-Project đã có workflow:
-
-```txt
-.github/workflows/deploy.yml
-```
-
-Cách deploy:
-
-1. Tạo repo GitHub mới.
-2. Push toàn bộ project lên branch `main`.
-3. Vào repo Settings → Pages.
-4. Ở Build and deployment → Source, chọn `GitHub Actions`.
-5. Push lại hoặc chạy workflow thủ công từ tab Actions.
-6. Web sẽ được deploy lên dạng:
-
-```txt
-https://<username>.github.io/<repo-name>/
-```
-
-`vite.config.js` đã tự set `base` theo tên repo khi chạy trong GitHub Actions.
-
-Nếu bạn dùng repo dạng user site như `<username>.github.io`, hãy đổi `base` trong `vite.config.js` thành `/`.
-
-
-## npm install troubleshooting
-
-If npm tries to fetch from `packages.applied-caas-gateway...internal.api.openai.org`, delete `package-lock.json` and `node_modules`, then run:
-
-```bash
-npm config set registry https://registry.npmjs.org/
-npm install
-```
-
-This project intentionally does not include a package lock file so npm will resolve packages from the public npm registry on your machine.
+- Nên dùng asset PNG cùng một model/style để giữ consistency.
+- Tất cả PNG nên có nền trong suốt, cạnh mềm, không chữ, không watermark.
+- Test trên mobile thật vì web dạng event thường có lượng truy cập mobile cao.
+- Nhạc nền nên để volume thấp, có nút bật/tắt rõ ràng vì browser thường chặn autoplay.
