@@ -19,7 +19,7 @@ Anh mong cánh đồng này có thể giữ hộ em một chút nắng, đến k
 };
 
 export const audioSettings = {
-  src: '/audio/Sunflower Quiet.mp3',
+  src: '/audio/classical-loop.mp3',
   volume: 0.05,
   autoPlay: true,
   autoPlayDelayMs: 220,
