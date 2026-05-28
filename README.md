@@ -1,89 +1,143 @@
-# Hái nắng cho em — World-class UI/UX upgrade
+# Hái nắng cho em
 
-Một single-page interactive web gift dùng React + Vite. Bản nâng cấp này giữ style vẽ tay dễ thương, giữ hệ asset hoa/background hiện tại, nhưng nâng trải nghiệm theo hướng web event thương mại: cinematic reveal, HUD tiến trình, micro-interaction, modal scrapbook, ending reward, responsive polish và fallback an toàn khi asset PNG mới chưa sẵn sàng.
+Một trang web nhỏ dùng React + Vite, tạo thành một cánh đồng hướng dương tương tác. Người xem có thể chạm vào từng bông hoa để đọc lời nhắn, giữ hoa vào rổ, rồi mở món quà cuối khi đã hái đủ 10 bông.
 
-## Điểm nâng cấp chính
+## Tính năng
 
-- Giữ 10 bông hoa tương tác và flow hái hoa cũ.
-- Nâng layer cảnh: ánh nắng, dust sparkle, wind ribbon, parallax foreground, mây PNG trôi chậm.
-- Thêm progress HUD dạng event collection, progress bar trong hero, orb trạng thái 10 hoa.
-- Nâng flower interaction: hover label, aura, touch ring, focus state, aria-label rõ hơn.
-- Nâng quote card: card giấy cao cấp, stamp, 2 action, entrance animation mềm.
-- Đổi “túi” thành “rổ hoa” để hợp asset PNG vẽ tay và cảm giác collectible.
-- Nâng inventory thành keepsake album có grid + detail card.
-- Nâng final gift: bouquet stage, ribbon, love-letter card PNG, cinematic backdrop.
-- Thêm keyboard UX: `Esc` đóng modal, `I` mở rổ hoa.
-- Thêm fallback CSS cho cloud/basket/letter/petal để layout không vỡ khi chưa có PNG.
+- Cảnh cánh đồng hướng dương với các lớp nền, mây, cánh hoa và hiệu ứng ánh nắng.
+- 10 bông hoa có thể tương tác, mỗi bông chứa một lời nhắn riêng.
+- Lời nhắn được xáo trộn trong mỗi lượt chơi để tạo cảm giác mới.
+- Hiệu ứng hoa bay vào rổ sau khi được giữ lại.
+- Rổ hoa lưu lại những bông đã hái.
+- Có thể mở rổ hoa để xem lại từng bông và lời nhắn.
+- Lưu tiến trình bằng `localStorage`.
+- Món quà cuối xuất hiện sau khi hái đủ 10 bông.
+- Có nút bật/tắt nhạc nền.
+- Giao diện có responsive cho desktop và điện thoại.
 
-## Cài đặt local
+## Cài đặt
 
 ```bash
 npm install
 npm run dev
 ```
 
-Mở URL Vite hiển thị, thường là:
+Mở đường dẫn Vite hiển thị trong terminal, thường là:
 
-```bash
+```txt
 http://localhost:5173
 ```
 
-## Build production
+## Build
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Cấu trúc chỉnh nhanh
+## Cấu trúc chính
 
 ```txt
-src/App.jsx                 Logic tương tác, modal, HUD, scene layers
-src/styles.css              Toàn bộ UI/UX, animation, responsive polish
-src/data/content.js         Quote, text, vị trí hoa, asset paths, cloud/petal data
-src/utils/storage.js        localStorage save/load/reset
-public/assets/README_ASSETS.md
-                            Danh sách asset PNG cần đặt đúng tên
-docs/AI_ASSET_PROMPTS.md    Prompt tạo PNG vẽ tay bằng AI
+src/App.jsx              Logic tương tác, modal, rổ hoa, ending
+src/styles.css           Giao diện, animation, responsive
+src/data/content.js      Nội dung lời nhắn, vị trí hoa, đường dẫn asset
+src/utils/storage.js     Lưu và xóa tiến trình bằng localStorage
+public/assets/           Hình ảnh dùng trong trang
 ```
 
-## Asset PNG cần tạo/thay
+## Danh sách asset cần có
 
-Đặt vào `public/assets/` đúng tên:
+Đặt các file hình vào thư mục:
 
 ```txt
+public/assets/
+```
+
+Tên file cần khớp với code:
+
+```txt
+bg-sunflower-field.png
+foreground-field.png
+foreground-near-flowers.png
+
+flower-variant-1.png
+flower-variant-2.png
+flower-variant-3.png
+flower-variant-4.png
+flower-variant-5.png
+flower-variant-6.png
+flower-variant-7.png
+flower-variant-8.png
+flower-variant-9.png
+flower-variant-10.png
+
 cloud-soft-01.png
 cloud-soft-02.png
 cloud-soft-03.png
 cloud-soft-04.png
 cloud-soft-05.png
+
+petal-handpainted.png
 flower-basket-handpainted.png
 love-letter-card-handpainted.png
-petal-handpainted.png
+loading-flower-handpainted.png
+final-bouquet-handpainted.png
 ```
 
-Các asset cũ cần giữ nguyên:
+## Chỉnh nội dung
+
+Các nội dung dễ chỉnh nằm trong:
 
 ```txt
-bg-sunflower-field.png
-flower-variant-1.png ... flower-variant-10.png
-foreground-field.png
-foreground-near-flowers.png
+src/data/content.js
 ```
+
+Có thể chỉnh:
+
+```txt
+editableContent
+flowerQuotes
+interactiveFlowers
+clouds
+petals
+```
+
+## Nhạc nền
+
+File nhạc mặc định:
+
+```txt
+public/audio/classical-loop.mp3
+```
+
+Nếu không có file này, nút nhạc vẫn hiển thị nhưng nhạc sẽ không phát. Có thể đổi đường dẫn trong `src/data/content.js`.
 
 ## Deploy GitHub Pages
 
-`vite.config.js` hiện dùng:
+Trong `vite.config.js`, trường `base` đang dùng:
 
 ```js
-base: '/sunflower-web-gift/'
+base: "/sunflower-web-gift/";
 ```
 
-Nếu repo GitHub của bạn khác tên, đổi `base` theo tên repo. Nếu deploy user site dạng `<username>.github.io`, đổi thành `/`.
+Nếu repo GitHub có tên khác, đổi `sunflower-web-gift` thành tên repo tương ứng.
 
-## Ghi chú thương mại hóa
+Nếu deploy dạng user site như:
 
-- Nên dùng asset PNG cùng một model/style để giữ consistency.
-- Tất cả PNG nên có nền trong suốt, cạnh mềm, không chữ, không watermark.
-- Test trên mobile thật vì web dạng event thường có lượng truy cập mobile cao.
-- Nhạc nền nên để volume thấp, có nút bật/tắt rõ ràng vì browser thường chặn autoplay.
+```txt
+https://<username>.github.io/
+```
+
+thì đổi thành:
+
+```js
+base: "/";
+```
+
+Sau khi push lên GitHub, bật Pages bằng GitHub Actions trong phần Settings của repo.
+
+## Ghi chú
+
+- Giữ đúng tên file asset để tránh lỗi mất hình.
+- Nên test trên cả desktop và điện thoại.
+- Nếu thay ảnh mới, nên xóa cache trình duyệt hoặc mở tab ẩn danh để kiểm tra.
