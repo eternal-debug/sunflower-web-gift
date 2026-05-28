@@ -211,14 +211,24 @@ function ForegroundLayers() {
 }
 
 function Flower({ flower, collected, quote, onPick }) {
+  const flowerPositionStyle = {
+    '--flower-x': `${flower.x}%`,
+    '--flower-y': `${flower.y}%`,
+    '--flower-empty-y': `${flower.y + 10}%`,
+    '--flower-size': `${flower.size}px`,
+    '--flower-empty-size': `${flower.size * 0.46}px`,
+  };
+
   if (collected) {
     return (
       <div
+        id={`flower-spot-${flower.id}`}
         className={`flower-empty-spot flower-depth-${flower.depth}`}
         style={{
-          left: `${flower.x}%`,
-          top: `${flower.y + 10}%`,
-          width: `${flower.size * 0.46}px`,
+          ...flowerPositionStyle,
+          left: 'var(--flower-x)',
+          top: 'var(--flower-empty-y)',
+          width: 'var(--flower-empty-size)',
         }}
         aria-hidden="true"
       />
@@ -228,14 +238,16 @@ function Flower({ flower, collected, quote, onPick }) {
   return (
     <button
       id={`flower-${flower.id}`}
+      data-flower-id={flower.id}
       className={`flower-button flower-depth-${flower.depth}`}
       type="button"
       aria-label={`Hái bông hoa: ${flower.label}. Lời nhắn: ${quote}`}
       onClick={() => onPick(flower)}
       style={{
-        left: `${flower.x}%`,
-        top: `${flower.y}%`,
-        width: `${flower.size}px`,
+        ...flowerPositionStyle,
+        left: 'var(--flower-x)',
+        top: 'var(--flower-y)',
+        width: 'var(--flower-size)',
         '--flower-tilt': `${flower.tilt}deg`,
         '--sway-amount': `${flower.sway}deg`,
         '--sway-delay': `${flower.delay}s`,
@@ -713,6 +725,29 @@ function App() {
   const bagRef = useRef(null);
 
   useEffect(() => {
+    function syncViewportSize() {
+      const viewport = window.visualViewport;
+      const width = Math.round(viewport?.width ?? window.innerWidth);
+      const height = Math.round(viewport?.height ?? window.innerHeight);
+
+      document.documentElement.style.setProperty('--app-width', `${width}px`);
+      document.documentElement.style.setProperty('--app-height', `${height}px`);
+    }
+
+    syncViewportSize();
+
+    window.addEventListener('resize', syncViewportSize, { passive: true });
+    window.addEventListener('orientationchange', syncViewportSize);
+    window.visualViewport?.addEventListener('resize', syncViewportSize, { passive: true });
+
+    return () => {
+      window.removeEventListener('resize', syncViewportSize);
+      window.removeEventListener('orientationchange', syncViewportSize);
+      window.visualViewport?.removeEventListener('resize', syncViewportSize);
+    };
+  }, []);
+
+  useEffect(() => {
     const loadingTimer = window.setTimeout(() => setPhase('curtain'), 1500);
     const revealTimer = window.setTimeout(() => setPhase('ready'), 3100);
     return () => {
@@ -772,6 +807,18 @@ function App() {
     () => collectedFlowers.find((flower) => flower.id === memoryFlowerId) ?? null,
     [collectedFlowers, memoryFlowerId]
   );
+
+  const hasBlockingOverlay = Boolean(activeFlower || inventoryOpen || memoryFlowerId || showFinal);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('modal-open', hasBlockingOverlay);
+    document.body.classList.toggle('modal-open', hasBlockingOverlay);
+
+    return () => {
+      document.documentElement.classList.remove('modal-open');
+      document.body.classList.remove('modal-open');
+    };
+  }, [hasBlockingOverlay]);
 
   const sceneStyle = {
     '--parallax-x': `${mouse.x * 10}px`,

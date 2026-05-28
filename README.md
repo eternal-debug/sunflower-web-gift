@@ -141,3 +141,28 @@ Sau khi push lên GitHub, bật Pages bằng GitHub Actions trong phần Setting
 - Giữ đúng tên file asset để tránh lỗi mất hình.
 - Nên test trên cả desktop và điện thoại.
 - Nếu thay ảnh mới, nên xóa cache trình duyệt hoặc mở tab ẩn danh để kiểm tra.
+
+## Responsive upgrade v13
+
+Bản này bổ sung lớp responsive consolidation ở cuối `src/styles.css` và một số hỗ trợ trong `src/App.jsx`:
+
+- Dùng `visualViewport` để cập nhật `--app-height` / `--app-width`, giảm lỗi 100vh trên mobile browser khi thanh địa chỉ co giãn.
+- Thêm `viewport-fit=cover` để hỗ trợ safe area trên iPhone tai thỏ / Dynamic Island.
+- Khóa scroll ổn định khi modal, rổ hoa hoặc final gift đang mở bằng class `modal-open` trên `html` và `body`.
+- Chuẩn hóa layout cho tablet, mobile portrait, điện thoại rất hẹp và landscape thấp.
+- Tăng touch target cho hoa và các nút điều khiển.
+- Dàn lại vị trí hoa trên mobile để hạn chế bị cắt cạnh, che bởi intro card hoặc đè lên controls.
+- Bổ sung fallback `prefers-reduced-motion` cho người dùng hạn chế chuyển động.
+
+Nên test tối thiểu các viewport:
+
+```txt
+320x568
+375x667
+390x844
+430x932
+768x1024
+844x390 landscape
+1024x768
+1440x900
+```
